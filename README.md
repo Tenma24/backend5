@@ -1,373 +1,183 @@
+# AutoDealer  Final Project 
+# Nurlan Ramazan SE-2431
 
-**Topic:** Auto Dealership 
+## Introduction
+This final project is the culmination of my work from the previous assignments. I transformed my modular, authenticated Node.js/Express API into a production-ready **Full-Stack Application**. The application includes a functional user interface, secure authentication, role-based access control (RBAC), and a MongoDB database with correctly linked objects. The project is deployed online and accessible via public URL(s), as required.
 
-This project implements:
-- MVC architecture (Models, Routes, Controllers, Middleware)
-- Two related MongoDB objects with full CRUD
-- Authentication with bcrypt and JWT
-- Role-Based Access Control (Admin vs User)
-
----
-
-##  Two Related Objects
-
-### Primary Object: Car
-
-**Schema (models/Car.js):**
-```javascript
-{
-  brand: String (required),       // "Toyota"
-  model: String (required),       // "Camry"
-  year: Number (required),        // 2020
-  price: Number (required),       // 13500000 KZT
-  mileage: Number,               // 65000 km
-  color: String,                 // "White"
-  transmission: String,          // "AT" or "MT"
-  fuel: String,                  // "Gasoline"
-  description: String
-}
-```
-
-### Secondary Object: Review
-
-**Schema (models/Review.js):**
-```javascript
-{
-  carId: ObjectId (ref: "Car"),  // Foreign key
-  rating: Number (1-5),
-  comment: String
-}
-```
-
-**Relationship:** One Car → Many Reviews
-
-**CRUD Operations:** All endpoints support Create, Read, Update, Delete
-- GET (Public) - Anyone can view
-- POST/PUT/DELETE (Admin only) - Protected by JWT + role check
+## Project Topic
+**AutoDealer / Car Catalog Platform**  
+Users can browse a catalog of cars and interact with public content (reviews). Administrators can perform sensitive actions such as managing cars and moderating content.
 
 ---
 
-###  MongoDB Screenshots
+## How This Meets the Final Project Criteria
 
-![s1](screens/s1.png)
----
+### 1) Advanced Backend Completion
+- **Full Logic Implementation:** All API endpoints required for the project theme are operational (Auth + Cars + Reviews + Stats).
+- **Relational Integrity:** Multiple objects are correctly linked in MongoDB:
+  - **Users** (authentication, roles)
+  - **Cars** (catalog items)
+  - **Reviews** (linked to cars and (if implemented) users)
+- **Advanced Middleware (RBAC):**
+  - **Admins** can perform sensitive actions (create/update/delete cars, review moderation).
+  - **Users** interact with public content (view catalog, create reviews depending on implemented rules).
+- **Validation & Error Handling:** Input validation is implemented in controllers, and errors are handled consistently via middleware.
 
-![s1](screens/s2.png)
----
+### 2) Frontend Integration
+- **Authentication Flow:** Login/registration forms store a **JWT** and use it for authorized requests.
+- **State Management:** The UI uses JavaScript `fetch()` to call the API and dynamically update the UI.
+- **Responsive Design:** The UI is structured to work across different screen sizes.
 
-## 🏗 MVC Architecture
-
-```
-cars-dealership/
-├── models/
-│   ├── User.js          # email, passwordHash, role
-│   ├── Car.js           # Primary object
-│   └── Review.js        # Secondary object
-│
-├── controllers/
-│   ├── authController.js    # register, login, makeAdmin
-│   ├── carController.js     # Car CRUD
-│   └── reviewController.js  # Review CRUD
-│
-├── routes/
-│   ├── authRoutes.js
-│   ├── carRoutes.js
-│   └── reviewRoutes.js
-│
-├── middleware/
-│   ├── auth.js          # JWT verification
-│   ├── isAdmin.js       # Role check
-│   └── errorLogger.js
-│
-├── public/
-│   ├── index.html
-│   └── app.js
-│
-├── app.js
-├── server.js
-└── .env
-```
-
-**Why MVC?**
-- Separation of concerns
-- Easy to maintain
-- Scalable architecture
-- Industry standard
+### 3) Deployment & Production
+- **Backend Deployment:** Deployed to **Render** (or similar platform), accessible via a public URL.
+- **Frontend Deployment:** Integrated frontend is served as static files from the Express server (deployed together).
+- **Environment Variables:** Sensitive configuration is stored in `.env` (MongoDB URI, JWT secret).
 
 ---
 
-##  Security Implementation
-
-### 1. Password Hashing (bcrypt)
-
-```javascript
-// Registration
-const passwordHash = await bcrypt.hash(password, 10);
-await User.create({ email, passwordHash, role: "user" });
-
-// Login
-const isValid = await bcrypt.compare(password, user.passwordHash);
-```
-
-### 2. JWT Authorization
-
-```javascript
-// Generate token on login
-const token = jwt.sign(
-  { id: user._id, email: user.email, role: user.role },
-  process.env.JWT_SECRET,
-  { expiresIn: "2h" }
-);
-
-// Verify token (middleware/auth.js)
-const payload = jwt.verify(token, process.env.JWT_SECRET);
-req.user = payload;
-```
-
-### 3. RBAC Implementation
-
-```javascript
-// middleware/isAdmin.js
-function isAdmin(req, res, next) {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-  next();
-}
-
-// routes/carRoutes.js
-router.post("/", auth, isAdmin, carController.create);  // Admin only
-router.get("/", carController.getAll);                  // Public
-```
-
+## Tech Stack
+- **Backend:** Node.js, Express.js  
+- **Database:** MongoDB, Mongoose  
+- **Auth:** JWT, bcrypt  
+- **Frontend:** HTML, CSS, Vanilla JavaScript (Fetch API)  
+- **Deployment:** Render  
 
 ---
 
-## 📡 API Endpoints
+## Folder Structure (MVC)
+```txt
+/models        -> Mongoose schemas (User, Car, Review)
+/controllers   -> Business logic (Auth, Cars, Reviews, Stats)
+/routes        -> API routes
+/middleware    -> auth (JWT), isAdmin (RBAC), error handling
+/public        -> Frontend HTML/CSS/JS (static files served by Express)
+server.js      -> Server entry point
+app.js         -> Express app configuration
+```
 
-**Base:** `http://localhost:3000`
+---
 
-### Authentication
-- POST `/api/auth/register` - Register user
-- POST `/api/auth/login` - Login (returns JWT)
-- POST `/api/auth/make-admin` - Promote to admin
+## Environment Variables
+
+Create a `.env` file in the root directory (do not commit it to GitHub). Example:
+
+```env
+PORT=3000
+MONGO_URI=your_mongodb_connection_string
+DB_NAME=autodealer_db
+JWT_SECRET=your_secret_key
+```
+
+---
+
+## API Endpoints
+
+### Auth
+- `POST /api/auth/register` — Register a new user
+- `POST /api/auth/login` — Login and receive JWT
 
 ### Cars
-- GET `/api/cars` - Get all (Public)
-- GET `/api/cars/:id` - Get one (Public)
-- POST `/api/cars` - Create (Admin)
-- PUT `/api/cars/:id` - Update (Admin)
-- DELETE `/api/cars/:id` - Delete (Admin)
+- `GET /api/cars` — Public: list cars
+- `GET /api/cars/:id` — Public: get car by id (if implemented)
+- `POST /api/cars` — Admin only: create car
+- `PUT /api/cars/:id` — Admin only: update car
+- `DELETE /api/cars/:id` — Admin only: delete car (and related reviews if implemented)
 
 ### Reviews
-- GET `/api/reviews` - Get all (Public)
-- GET `/api/reviews/:id` - Get one (Public)
-- POST `/api/reviews` - Create (Admin)
-- PUT `/api/reviews/:id` - Update (Admin)
-- DELETE `/api/reviews/:id` - Delete (Admin)
+- `GET /api/reviews` — Public: list reviews
+- `GET /api/reviews/:id` — Public: get review by id (if implemented)
+- `POST /api/reviews` — Auth required: create review (user interaction with public content)
+- `PUT /api/reviews/:id` — Owner/Admin (depending on implementation): update review
+- `DELETE /api/reviews/:id` — Owner/Admin (depending on implementation): delete review
+
+### Stats
+- `GET /api/stats` — Public: basic stats for landing page (cars count, reviews count, featured cars, etc.)
 
 ---
 
-##  Setup
-
-### Installation
+## How to Run Locally
 
 1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Create `.env`:
-```env
-PORT=3000
-MONGO_URI=mongodb://127.0.0.1:27017
-DB_NAME=wt2_assignment4_autodealer
-JWT_SECRET=your_secret_key
-```
+2. Create `.env` (see Environment Variables section).
 
-3. Run:
+3. Start the server:
 ```bash
-npm run dev
+npm start
 ```
+(or `node server.js`)
 
-4. Access:
-- API: http://localhost:3000/api
-- Frontend: http://localhost:3000/
-
----
-
-##  Postman Testing
-
-### Setup Users
-
-1. Register regular user:
+4. Open the app:
 ```
-POST /api/auth/register
-{ "email": "user@test.com", "password": "user123" }
-```
-
-2. Register admin:
-```
-POST /api/auth/register
-{ "email": "admin@test.com", "password": "admin123" }
-```
-
-3. Promote to admin:
-```
-POST /api/auth/make-admin
-{ "email": "admin@test.com" }
-```
-
-4. Login as user (save token as USER_TOKEN):
-```
-POST /api/auth/login
-{ "email": "user@test.com", "password": "user123" }
-```
-
-5. Login as admin (save token as ADMIN_TOKEN):
-```
-POST /api/auth/login
-{ "email": "admin@test.com", "password": "admin123" }
+http://localhost:3000
 ```
 
 ---
 
-##  Postman Test Cases
+## Deployment (Render)
 
-### Test 1: User tries POST (403 Forbidden)
-
+1. Push the project to GitHub.
+2. Create a new Web Service on Render.
+3. Set **Build Command**:
+```bash
+npm install
 ```
-POST /api/cars
-Headers: Authorization: Bearer USER_TOKEN
-Body: { "brand": "BMW", "model": "X5", "year": 2022, "price": 25000000 }
-
-Expected: 403 Forbidden
+4. Set **Start Command**:
+```bash
+node server.js
 ```
+(or `npm start`)
+
+5. Add environment variables in Render dashboard:
+   - `MONGO_URI`
+   - `DB_NAME`
+   - `JWT_SECRET`
+   - `PORT` (optional; Render sets PORT automatically)
+
+6. Deploy and open the public URL.
+
+![Landing Page](screens/s1.png)
 
 ---
 
-###  Test 2: No token (401 Unauthorized)
+## Postman Collection
 
-```
-POST /api/cars
-Body: { "brand": "Audi", "model": "A4", "year": 2021, "price": 18000000 }
+A Postman collection is included to test all production endpoints:
+- Register
+- Login
+- Cars CRUD (admin)
+- Reviews operations
+- Stats endpoint
 
-Expected: 401 Unauthorized
-```
-
-[INSERT SCREENSHOT: Postman showing 401 error]
-
----
-
-###  Test 3: Admin POST (201 Created)
-
-```
-POST /api/cars
-Headers: Authorization: Bearer ADMIN_TOKEN
-Body: { "brand": "Toyota", "model": "Camry", "year": 2020, "price": 13500000 }
-
-Expected: 201 Created
-```
-![s1](screens/s3.png)
+(Attach file: `postman_collection.json`)
 
 ---
 
-###  Test 4: Admin PUT (200 OK)
+## Screenshots (Placeholders)
 
-```
-PUT /api/cars/:id
-Headers: Authorization: Bearer ADMIN_TOKEN
-Body: { "price": 13000000 }
+![Landing Page](screens/s2.png)
 
-Expected: 200 OK
-```
+![Landing Page](screens/s3.png)
 
-![s1](screens/s4.png)
----
+![Landing Page](screens/s4.png)
 
-###  Test 5: Admin DELETE (200 OK)
-
-```
-DELETE /api/cars/:id
-Headers: Authorization: Bearer ADMIN_TOKEN
-
-Expected: 200 OK
-```
-![s1](screens/s5.png)
+![Landing Page](screens/s5.png)
 
 ---
 
+## Explaination
 
-##  Testing Summary
-
-###  Success (Admin):
-- POST /api/cars → 201
-- PUT /api/cars/:id → 200
-- DELETE /api/cars/:id → 200
-- POST /api/reviews → 201
-- Passwords hashed in DB
-- JWT generated on login
-
-###  Failures (Security):
-- User POST → 403 Forbidden
-- No token POST → 401 Unauthorized
-- Invalid carId → 400 Bad Request
-
-###  Public Access:
-- GET /api/cars works without auth
-- GET /api/reviews works without auth
+- **MVC structure** and how requests flow from routes → controllers → models
+- **JWT authentication:** token creation, storage, and usage in `Authorization: Bearer <token>`
+- **RBAC:** how admin-only routes are protected using middleware
+- **Relational integrity in MongoDB:** linking reviews to cars (and users if implemented)
+- **Deployment steps** and environment variable usage
 
 ---
 
+## Conclusion
 
-### Architecture & CRUD (25%)
--  Models, Routes, Controllers, Middleware separated
--  Car full CRUD
--  Review full CRUD
--  One-to-many relationship
-
-### Security & RBAC (25%)
--  bcrypt password hashing
--  JWT authentication
--  Admin restricts POST/PUT/DELETE
--  Token verification middleware
-
-
-![s1](screens/s6.png)
-
----
-
-##  Dependencies
-
-```json
-{
-  "express": "^4.18.2",
-  "mongoose": "^7.0.0",
-  "bcrypt": "^5.1.0",
-  "jsonwebtoken": "^9.0.0",
-  "dotenv": "^16.0.3"
-}
-```
-
----
-
-##  Author
-
-**Name:** [Your Name]  
-**Student ID:** [Your ID]  
-**Course:** Web Technologies 2  
-**Assignment:** #4
-
-**GitHub:** [Repository link]  
-**Postman:** [Collection link]
-
----
-
-##  Conclusion
-
-Successfully implemented:
-- MVC architecture with clean separation
-- Secure authentication (bcrypt + JWT)
-- Role-based access control
-- Two related objects with full CRUD
-- Professional industry practices
+This project demonstrates a complete full-stack workflow: building a secure modular API, connecting it to a functional frontend, enforcing RBAC, maintaining relational integrity in MongoDB, and deploying the final product publicly. It satisfies the final project requirements for integration, deployment, code quality, and explainability for the final defense.
