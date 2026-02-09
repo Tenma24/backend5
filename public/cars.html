@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Cars - Ramazan Motors</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">RM</div>
+        <span>Ramazan Motors</span>
+      </a>
+      
+      <button class="navbar-toggle" onclick="toggleMobileMenu()">☰</button>
+      
+      <ul class="navbar-nav">
+        <li><a href="/index.html" class="nav-link">Home</a></li>
+        <li><a href="/cars.html" class="nav-link active">Browse Cars</a></li>
+        <li class="nav-auth"></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <section class="container">
+    <div class="d-flex justify-between align-center" style="margin: 40px 0 20px;">
+      <div>
+        <h1 style="margin-bottom: 8px;">Our Inventory</h1>
+        <p class="text-muted" id="carCount">Loading...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <section class="container">
+    <div class="card">
+      <div class="d-flex gap-2" style="flex-wrap: wrap;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="form-control" 
+          placeholder="Search by brand, model, year..."
+          style="flex: 1; min-width: 200px;"
+        >
+        <select id="sortSelect" class="form-control" style="max-width: 200px;">
+          <option value="new">Newest First</option>
+          <option value="priceAsc">Price: Low to High</option>
+          <option value="priceDesc">Price: High to Low</option>
+          <option value="yearDesc">Year: New to Old</option>
+          <option value="yearAsc">Year: Old to New</option>
+        </select>
+        <button onclick="loadCars()" class="btn btn-primary">Refresh</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cars Grid -->
+  <section class="container">
+    <div class="grid grid-3" id="carsGrid">
+      <div class="card"><div class="spinner"></div></div>
+      <div class="card"><div class="spinner"></div></div>
+      <div class="card"><div class="spinner"></div></div>
+    </div>
+  </section>
+
+  <!-- Car Detail Modal -->
+  <div id="carModal" class="loading-overlay" style="display: none;">
+    <div class="card" style="max-width: 800px; max-height: 90vh; overflow-y: auto; margin: 20px;">
+      <div class="card-header">
+        <div class="d-flex justify-between align-center">
+          <h2 class="card-title" id="modalTitle"></h2>
+          <button onclick="closeModal()" class="btn btn-sm">✕</button>
+        </div>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/main.js"></script>
+  <script>
+    let allCars = [];
+    let allReviews = [];
+
+    async function loadCars() {
+      try {
+        showLoading();
+        
+        // Load cars and reviews
+        const [carsData, reviewsData] = await Promise.all([
+          apiCall('/cars'),
+          apiCall('/reviews')
+        ]);
+
+        allCars = carsData.cars || [];
+        allReviews = reviewsData.reviews || [];
+
+        renderCars();
+        hideLoading();
+
+      } catch (error) {
+        console.error('Error loading cars:', error);
+        showToast('Failed to load cars', 'error');
+        hideLoading();
+      }
+    }
+
+    function getReviewsForCar(carId) {
+      return allReviews.filter(r => 
+        String(r.carId) === String(carId) || 
+        String(r.carId?._id) === String(carId)
+      );
+    }
+
+    function getAvgRating(carId) {
+      const reviews = getReviewsForCar(carId);
+      if (reviews.length === 0) return 0;
+      return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    }
+
+    function filterAndSortCars() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const sortBy = document.getElementById('sortSelect').value;
+
+      let filtered = [...allCars];
+
+      // Filter by search
+      if (searchTerm) {
+        filtered = filtered.filter(car => {
+          const text = `${car.brand} ${car.model} ${car.year} ${car.color} ${car.fuel} ${car.description}`.toLowerCase();
+          return text.includes(searchTerm);
+        });
+      }
+
+      // Sort
+      filtered.sort((a, b) => {
+        switch (sortBy) {
+          case 'priceAsc': return (a.price || 0) - (b.price || 0);
+          case 'priceDesc': return (b.price || 0) - (a.price || 0);
+          case 'yearAsc': return (a.year || 0) - (b.year || 0);
+          case 'yearDesc': return (b.year || 0) - (a.year || 0);
+          default: 
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        }
+      });
+
+      return filtered;
+    }
+
+    function renderCars() {
+      const cars = filterAndSortCars();
+      const grid = document.getElementById('carsGrid');
+      const countEl = document.getElementById('carCount');
+
+      countEl.textContent = `${cars.length} car${cars.length !== 1 ? 's' : ''} available`;
+
+      if (cars.length === 0) {
+        grid.innerHTML = '<p class="text-muted text-center">No cars found</p>';
+        return;
+      }
+
+      grid.innerHTML = cars.map(car => {
+        const reviews = getReviewsForCar(car._id);
+        const avgRating = getAvgRating(car._id);
+
+        return `
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">${escapeHtml(car.brand)} ${escapeHtml(car.model)}</h3>
+              <div class="card-subtitle">
+                ${car.year} • ${escapeHtml(car.color || '—')} • ${escapeHtml(car.transmission || '—')}
+              </div>
+            </div>
+            
+            <div class="card-body">
+              <div class="d-flex justify-between align-center mb-2">
+                <div class="badge badge-success">${formatPrice(car.price)}</div>
+                <div class="badge">${car.mileage ? car.mileage.toLocaleString() + ' km' : 'N/A'}</div>
+              </div>
+              
+              ${reviews.length > 0 ? `
+                <div class="d-flex align-center gap-1 mb-2">
+                  <span>${renderStars(avgRating)}</span>
+                  <span class="text-muted">${avgRating.toFixed(1)}/5 (${reviews.length} reviews)</span>
+                </div>
+              ` : '<p class="text-muted" style="font-size: 0.9rem;">No reviews yet</p>'}
+              
+              ${car.description ? `<p class="text-muted" style="font-size: 0.9rem;">${escapeHtml(car.description).slice(0, 100)}...</p>` : ''}
+            </div>
+            
+            <div class="card-footer">
+              <button onclick="viewCarDetails('${car._id}')" class="btn btn-primary btn-block">
+                View Details
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function viewCarDetails(carId) {
+      const car = allCars.find(c => String(c._id) === String(carId));
+      if (!car) return;
+
+      const reviews = getReviewsForCar(carId);
+      const avgRating = getAvgRating(carId);
+
+      const modal = document.getElementById('carModal');
+      const title = document.getElementById('modalTitle');
+      const content = document.getElementById('modalContent');
+
+      title.textContent = `${car.brand} ${car.model} (${car.year})`;
+
+      content.innerHTML = `
+        <div class="card-body">
+          <div class="stats-grid" style="margin-bottom: 24px;">
+            <div>
+              <strong>Price:</strong><br>
+              <span class="text-primary" style="font-size: 1.5rem;">${formatPrice(car.price)}</span>
+            </div>
+            <div>
+              <strong>Mileage:</strong><br>
+              ${car.mileage ? car.mileage.toLocaleString() + ' km' : 'N/A'}
+            </div>
+            <div>
+              <strong>Color:</strong><br>
+              ${escapeHtml(car.color || 'N/A')}
+            </div>
+            <div>
+              <strong>Fuel:</strong><br>
+              ${escapeHtml(car.fuel || 'N/A')}
+            </div>
+          </div>
+
+          ${car.description ? `
+            <div class="mb-3">
+              <strong>Description:</strong>
+              <p class="text-muted">${escapeHtml(car.description)}</p>
+            </div>
+          ` : ''}
+
+          <div class="reviews-section">
+            <h3 class="mb-2">Reviews ${reviews.length > 0 ? `(${renderStars(avgRating)} ${avgRating.toFixed(1)}/5)` : ''}</h3>
+            
+            ${reviews.length > 0 ? reviews.map(review => `
+              <div class="review">
+                <div class="review-header">
+                  <span class="stars">${renderStars(review.rating)}</span>
+                  <span class="badge">${review.rating}/5</span>
+                </div>
+                <p class="review-comment">${escapeHtml(review.comment)}</p>
+              </div>
+            `).join('') : '<p class="text-muted">No reviews yet</p>'}
+          </div>
+        </div>
+      `;
+
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('carModal').style.display = 'none';
+    }
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', renderCars);
+    document.getElementById('sortSelect').addEventListener('change', renderCars);
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadCars);
+  </script>
+</body>
+</html>

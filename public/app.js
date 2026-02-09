@@ -14,13 +14,11 @@ const loginBtn = document.getElementById("loginBtn");
 const searchEl = document.getElementById("search");
 const sortEl = document.getElementById("sort");
 
-const addBtn = document.getElementById("addBtn");
 const loadBtn = document.getElementById("loadBtn");
-const clearBtn = document.getElementById("clearBtn");
 
-// Add form fields
+// Car form fields
 const f = (id) => document.getElementById(id);
-const form = {
+const carForm = {
   brand: f("brand"),
   model: f("model"),
   year: f("year"),
@@ -30,6 +28,13 @@ const form = {
   transmission: f("transmission"),
   fuel: f("fuel"),
   description: f("description"),
+};
+
+// Review form fields
+const reviewForm = {
+  carId: f("reviewCarId"),
+  rating: f("reviewRating"),
+  comment: f("reviewComment"),
 };
 
 // Modal
@@ -52,6 +57,7 @@ const e = {
 };
 
 let carsCache = [];
+let reviewsCache = [];
 let editingId = null;
 
 // ---------- AUTH helpers ----------
@@ -109,9 +115,11 @@ function refreshAuthUI() {
 init();
 
 function init() {
-  loadBtn.addEventListener("click", loadCars);
-  addBtn.addEventListener("click", addCar);
-  clearBtn.addEventListener("click", clearAddForm);
+  loadBtn.addEventListener("click", loadData);
+  f("addCarBtn").addEventListener("click", addCar);
+  f("clearCarBtn").addEventListener("click", clearCarForm);
+  f("addReviewBtn").addEventListener("click", addReview);
+  f("clearReviewBtn").addEventListener("click", clearReviewForm);
 
   searchEl.addEventListener("input", render);
   sortEl.addEventListener("change", render);
@@ -130,8 +138,19 @@ function init() {
     showToast("Logged out", "good");
   });
 
+  // Tab switching
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const targetTab = tab.getAttribute("data-tab");
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tabContent").forEach(tc => tc.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(targetTab + "Tab").classList.add("active");
+    });
+  });
+
   refreshAuthUI();
-  loadCars();
+  loadData();
 }
 
 // ---------- UI helpers ----------
@@ -180,31 +199,53 @@ function validateCarLocal(car) {
   return errors;
 }
 
-function clearAddForm() {
-  for (const k of Object.keys(form)) form[k].value = "";
-  showToast("Form cleared", "good");
+function clearCarForm() {
+  for (const k of Object.keys(carForm)) carForm[k].value = "";
+  showToast("Car form cleared", "good");
+}
+
+function clearReviewForm() {
+  for (const k of Object.keys(reviewForm)) reviewForm[k].value = "";
+  showToast("Review form cleared", "good");
+}
+
+function renderStars(rating) {
+  const full = "⭐".repeat(Math.floor(rating));
+  return full || "—";
 }
 
 // ---------- API ----------
-async function loadCars() {
+async function loadData() {
   listEl.innerHTML = `<div class="chip">Loading...</div>`;
 
   try {
-    const res = await fetch("/api/cars");
-    const data = await res.json();
+    // Load cars
+    const carsRes = await fetch("/api/cars");
+    const carsData = await carsRes.json();
 
-    if (!res.ok) {
+    if (!carsRes.ok) {
       listEl.innerHTML = "";
-      showToast(data?.error || "Failed to load cars", "bad");
+      showToast(carsData?.error || "Failed to load cars", "bad");
       return;
     }
 
-    carsCache = data.cars || [];
-    statTotal.textContent = String(data.count ?? carsCache.length);
+    carsCache = carsData.cars || [];
+
+    // Load reviews
+    const reviewsRes = await fetch("/api/reviews");
+    const reviewsData = await reviewsRes.json();
+    
+    if (reviewsRes.ok) {
+      reviewsCache = reviewsData.reviews || [];
+    } else {
+      reviewsCache = [];
+    }
+
+    statTotal.textContent = String(carsData.count ?? carsCache.length);
     statSync.textContent = new Date().toLocaleTimeString();
 
     render();
-    showToast("Cars loaded", "good");
+    showToast("Data loaded", "good");
   } catch (err) {
     listEl.innerHTML = "";
     showToast("Network error while loading", "bad");
@@ -250,7 +291,7 @@ async function addCar() {
     return;
   }
 
-  const car = readCarFromForm(form);
+  const car = readCarFromForm(carForm);
   const errors = validateCarLocal(car);
   if (errors.length) {
     showToast(errors.join(", "), "bad");
@@ -271,11 +312,60 @@ async function addCar() {
       return;
     }
 
-    clearAddForm();
-    await loadCars();
+    clearCarForm();
+    await loadData();
     showToast("Car added successfully", "good");
   } catch {
     showToast("Network error while adding", "bad");
+  }
+}
+
+async function addReview() {
+  if (!isLoggedIn()) {
+    showToast("Login first (admin token needed)", "bad");
+    return;
+  }
+  if (!isAdmin()) {
+    showToast("Forbidden: admin only", "bad");
+    return;
+  }
+
+  const carId = String(reviewForm.carId.value || "").trim();
+  const rating = Number(reviewForm.rating.value);
+  const comment = String(reviewForm.comment.value || "").trim();
+
+  if (!carId) {
+    showToast("Car ID is required", "bad");
+    return;
+  }
+  if (!rating || rating < 1 || rating > 5) {
+    showToast("Rating must be 1-5", "bad");
+    return;
+  }
+  if (!comment || comment.length < 2) {
+    showToast("Comment must be at least 2 characters", "bad");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ carId, rating, comment }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.details ? data.details.join(", ") : (data?.error || "Failed to add review");
+      showToast(msg, "bad");
+      return;
+    }
+
+    clearReviewForm();
+    await loadData();
+    showToast("Review added successfully", "good");
+  } catch {
+    showToast("Network error while adding review", "bad");
   }
 }
 
@@ -313,6 +403,10 @@ function filteredAndSortedCars() {
   return arr;
 }
 
+function getReviewsForCar(carId) {
+  return reviewsCache.filter(r => String(r.carId) === String(carId) || String(r.carId?._id) === String(carId));
+}
+
 function render() {
   const arr = filteredAndSortedCars();
 
@@ -334,8 +428,35 @@ function render() {
 
     const desc = c.description ? escapeHtml(c.description) : "";
 
+    // Get reviews for this car
+    const carReviews = getReviewsForCar(c._id);
+
     const el = document.createElement("div");
     el.className = "card";
+
+    let reviewsHtml = '';
+    if (carReviews.length > 0) {
+      reviewsHtml = `
+        <div class="reviewsSection">
+          <div class="reviewsTitle">Reviews (${carReviews.length}):</div>
+          ${carReviews.map(r => `
+            <div class="review">
+              <div class="reviewHeader">
+                <span class="stars">${renderStars(r.rating)}</span>
+                <span class="chip">${r.rating}/5</span>
+              </div>
+              <div class="reviewComment">${escapeHtml(r.comment || "")}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      reviewsHtml = `
+        <div class="reviewsSection">
+          <div class="noReviews">No reviews yet</div>
+        </div>
+      `;
+    }
 
     el.innerHTML = `
       <div class="cardTop">
@@ -349,14 +470,15 @@ function render() {
       <div class="chips">
         <span class="chip">ID: ${escapeHtml(String(c._id))}</span>
         <span class="chip">Created: ${c.createdAt ? new Date(c.createdAt).toLocaleString() : "—"}</span>
-        <span class="chip">Updated: ${c.updatedAt ? new Date(c.updatedAt).toLocaleString() : "—"}</span>
       </div>
 
       ${desc ? `<div class="subtitle">${desc}</div>` : ""}
 
+      ${reviewsHtml}
+
       <div class="cardBtns">
-        <button class="btn" data-action="edit" data-id="${c._id}">Edit</button>
-        <button class="btn btnDanger" data-action="delete" data-id="${c._id}">Delete</button>
+        <button class="btn btnSmall" data-action="edit" data-id="${c._id}">Edit Car</button>
+        <button class="btn btnSmall btnDanger" data-action="delete" data-id="${c._id}">Delete Car</button>
       </div>
     `;
 
@@ -446,7 +568,7 @@ async function saveEdit() {
     }
 
     closeModal();
-    await loadCars();
+    await loadData();
     showToast("Car updated", "good");
   } catch {
     showToast("Network error while updating", "bad");
@@ -488,7 +610,7 @@ async function doDelete(id) {
       return;
     }
 
-    await loadCars();
+    await loadData();
     showToast("Car deleted", "good");
   } catch {
     showToast("Network error while deleting", "bad");

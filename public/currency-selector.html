@@ -1,0 +1,83 @@
+
+<style>
+.currency-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+.currency-selector label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.currency-selector select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.currency-selector select:focus {
+  outline: none;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.currency-selector select option {
+  background: var(--bg-dark);
+  color: var(--text);
+}
+</style>
+
+<div class="currency-selector">
+  <label>💱</label>
+  <select id="currencySelector" onchange="handleCurrencyChange(this.value)">
+    <option value="KZT">KZT (₸)</option>
+    <option value="USD">USD ($)</option>
+    <option value="EUR">EUR (€)</option>
+    <option value="RUB">RUB (₽)</option>
+  </select>
+</div>
+
+<script>
+function handleCurrencyChange(currency) {
+  setCurrency(currency);
+  
+  if (typeof renderCars === 'function') renderCars();
+  if (typeof loadHomeData === 'function') loadHomeData();
+  if (typeof loadData === 'function') loadData();
+  
+  showToast(`Currency changed to ${currency}`, 'success');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const selector = document.getElementById('currencySelector');
+  if (selector) {
+    selector.value = getCurrency();
+  }
+});
+</script>
+
+
+  <li>
+    <div class="currency-selector">
+      <label>💱</label>
+      <select id="currencySelector" onchange="handleCurrencyChange(this.value)">
+        <option value="KZT">KZT (₸)</option>
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="RUB">RUB (₽)</option>
+      </select>
+    </div>
+  </li>
+  
+  <li class="nav-auth"></li>
+</ul>

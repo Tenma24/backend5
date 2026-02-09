@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Ramazan Motors</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">RM</div>
+        <span>Ramazan Motors</span>
+      </a>
+      
+      <button class="navbar-toggle" onclick="toggleMobileMenu()">☰</button>
+      
+      <ul class="navbar-nav">
+        <li><a href="/index.html" class="nav-link">Home</a></li>
+        <li><a href="/cars.html" class="nav-link">Browse Cars</a></li>
+        <li class="nav-auth"></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="container" style="max-width: 600px; padding-top: 60px;">
+    <!-- Profile Card -->
+    <div class="card">
+      <div class="card-header text-center">
+        <div style="width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: grid; place-items: center; font-size: 2rem; font-weight: 800; color: white;">
+          <span id="profileInitial">U</span>
+        </div>
+        <h2 class="card-title" id="profileEmail">Loading...</h2>
+        <p class="card-subtitle" id="profileRole"></p>
+      </div>
+
+      <div class="card-body">
+        <h3 class="mb-2">Account Information</h3>
+        
+        <div class="mb-3">
+          <div class="d-flex justify-between align-center mb-2">
+            <span class="text-muted">Email:</span>
+            <strong id="detailEmail">—</strong>
+          </div>
+          <div class="d-flex justify-between align-center mb-2">
+            <span class="text-muted">Role:</span>
+            <span class="badge badge-primary" id="detailRole">—</span>
+          </div>
+          <div class="d-flex justify-between align-center">
+            <span class="text-muted">Access Level:</span>
+            <strong id="detailAccess">—</strong>
+          </div>
+        </div>
+
+        ${isAdmin() ? `
+          <div class="card" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+            <h3 style="margin-bottom: 8px;">Admin Features</h3>
+            <p class="text-muted" style="margin-bottom: 12px;">You have administrative privileges</p>
+            <a href="/admin.html" class="btn btn-primary btn-block">
+              Go to Admin Panel
+            </a>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="card-footer">
+        <button onclick="handleLogout()" class="btn btn-danger btn-block">
+          Logout
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions Card -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h3 class="card-title">Quick Actions</h3>
+      </div>
+      <div class="d-flex flex-column gap-2">
+        <a href="/cars.html" class="btn btn-block">Browse Cars</a>
+        <a href="/index.html" class="btn btn-block">Back to Home</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/main.js"></script>
+  <script>
+    // Require authentication
+    if (!requireAuth()) {
+      // Will redirect automatically
+    }
+
+    function loadProfile() {
+      const auth = getAuth();
+
+      if (!auth.email) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Set profile data
+      document.getElementById('profileEmail').textContent = auth.email;
+      document.getElementById('profileRole').textContent = auth.role.toUpperCase();
+      document.getElementById('profileInitial').textContent = auth.email.charAt(0).toUpperCase();
+
+      document.getElementById('detailEmail').textContent = auth.email;
+      document.getElementById('detailRole').textContent = auth.role;
+      document.getElementById('detailAccess').textContent = auth.role === 'admin' ? 'Full Access' : 'Limited Access';
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        logout();
+      }
+    }
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadProfile);
+  </script>
+</body>
+</html>

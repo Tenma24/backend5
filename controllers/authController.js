@@ -11,7 +11,6 @@ function makeToken(user) {
   );
 }
 
-// POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
@@ -23,10 +22,15 @@ exports.register = async (req, res, next) => {
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(409).json({ error: "Email already exists" });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, passwordHash, role: "user" });
-
+    
+    // ✅ FIX: Create the user with hashed password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ 
+      email, 
+      passwordHash: hashedPassword,
+      role: "user"
+    });
+    
     return res.status(201).json({
       message: "Registered",
       user: { id: user._id, email: user.email, role: user.role }
@@ -36,7 +40,6 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/login
 exports.login = async (req, res, next) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
@@ -57,7 +60,6 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/make-admin  (для сдачи удобно)
 exports.makeAdmin = async (req, res, next) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();

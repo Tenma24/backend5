@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Ramazan Motors</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+    }
+    .tab {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: var(--transition);
+    }
+    .tab:hover {
+      color: var(--text);
+    }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">RM</div>
+        <span>Ramazan Motors</span>
+      </a>
+      
+      <button class="navbar-toggle" onclick="toggleMobileMenu()">☰</button>
+      
+      <ul class="navbar-nav">
+        <li><a href="/index.html" class="nav-link">Home</a></li>
+        <li><a href="/cars.html" class="nav-link">Browse Cars</a></li>
+        <li><a href="/admin.html" class="nav-link active">Admin</a></li>
+        <li class="nav-auth"></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="container">
+    <h1 class="mb-3">Admin Dashboard</h1>
+
+    <!-- Stats -->
+    <div class="stats-grid mb-4" id="adminStats">
+      <div class="stat-card"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('addCar')">Add Car</button>
+      <button class="tab" onclick="switchTab('addReview')">Add Review</button>
+      <button class="tab" onclick="switchTab('manageCars')">Manage Cars</button>
+      <button class="tab" onclick="switchTab('manageReviews')">Manage Reviews</button>
+    </div>
+
+    <!-- Add Car Tab -->
+    <div id="addCar" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Add New Car</h2>
+        </div>
+        <form id="addCarForm" onsubmit="handleAddCar(event)">
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label class="form-label">Brand *</label>
+              <input type="text" name="brand" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model *</label>
+              <input type="text" name="model" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Year *</label>
+              <input type="number" name="year" class="form-control" required min="1950" max="2100">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Price (KZT) *</label>
+              <input type="number" name="price" class="form-control" required min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mileage (km)</label>
+              <input type="number" name="mileage" class="form-control" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color</label>
+              <input type="text" name="color" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Transmission</label>
+              <select name="transmission" class="form-control">
+                <option value="">—</option>
+                <option value="AT">AT</option>
+                <option value="MT">MT</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fuel</label>
+              <select name="fuel" class="form-control">
+                <option value="">—</option>
+                <option value="Gasoline">Gasoline</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Electric">Electric</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Add Car</button>
+            <button type="reset" class="btn">Clear Form</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Review Tab -->
+    <div id="addReview" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Add New Review</h2>
+        </div>
+        <form id="addReviewForm" onsubmit="handleAddReview(event)">
+          <div class="form-group">
+            <label class="form-label">Car *</label>
+            <select name="carId" id="reviewCarSelect" class="form-control" required>
+              <option value="">Select a car...</option>
+            </select>
+            <small class="form-text">Choose which car this review is for</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rating *</label>
+            <select name="rating" class="form-control" required>
+              <option value="">Select rating...</option>
+              <option value="5">⭐⭐⭐⭐⭐ (5 - Excellent)</option>
+              <option value="4">⭐⭐⭐⭐ (4 - Good)</option>
+              <option value="3">⭐⭐⭐ (3 - Average)</option>
+              <option value="2">⭐⭐ (2 - Poor)</option>
+              <option value="1">⭐ (1 - Terrible)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Comment *</label>
+            <textarea name="comment" class="form-control" required rows="4"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Add Review</button>
+            <button type="reset" class="btn">Clear Form</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Manage Cars Tab -->
+    <div id="manageCars" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Manage Cars</h2>
+        </div>
+        <div id="carsTable">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Manage Reviews Tab -->
+    <div id="manageReviews" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Manage Reviews</h2>
+        </div>
+        <div id="reviewsTable">Loading...</div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/main.js"></script>
+  <script>
+    // Check admin access
+    if (!requireAuth() || !requireAdmin()) {
+      // Will redirect automatically
+    }
+
+    let cars = [];
+    let reviews = [];
+
+    // Load initial data
+    async function loadData() {
+      try {
+        showLoading();
+        const [statsData, carsData, reviewsData] = await Promise.all([
+          apiCall('/stats'),
+          apiCall('/cars'),
+          apiCall('/reviews')
+        ]);
+
+        cars = carsData.cars || [];
+        reviews = reviewsData.reviews || [];
+
+        // Render stats
+        const statsEl = document.getElementById('adminStats');
+        statsEl.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-value">${statsData.totalCars}</div>
+            <div class="stat-label">Total Cars</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${statsData.totalReviews}</div>
+            <div class="stat-label">Total Reviews</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${statsData.totalUsers}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${statsData.avgRating.toFixed(1)}</div>
+            <div class="stat-label">Avg Rating</div>
+          </div>
+        `;
+
+        // Populate car select for reviews
+        const carSelect = document.getElementById('reviewCarSelect');
+        carSelect.innerHTML = '<option value="">Select a car...</option>' + 
+          cars.map(car => `
+            <option value="${car._id}">${escapeHtml(car.brand)} ${escapeHtml(car.model)} (${car.year})</option>
+          `).join('');
+
+        renderManageCars();
+        renderManageReviews();
+        hideLoading();
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showToast('Failed to load data', 'error');
+        hideLoading();
+      }
+    }
+
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+    }
+
+    async function handleAddCar(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      
+      const carData = {
+        brand: formData.get('brand'),
+        model: formData.get('model'),
+        year: Number(formData.get('year')),
+        price: Number(formData.get('price')),
+        mileage: formData.get('mileage') ? Number(formData.get('mileage')) : null,
+        color: formData.get('color'),
+        transmission: formData.get('transmission'),
+        fuel: formData.get('fuel'),
+        description: formData.get('description')
+      };
+
+      try {
+        await apiCall('/cars', {
+          method: 'POST',
+          body: JSON.stringify(carData)
+        });
+
+        showToast('Car added successfully!', 'success');
+        form.reset();
+        await loadData();
+
+      } catch (error) {
+        showToast(error.message || 'Failed to add car', 'error');
+      }
+    }
+
+    async function handleAddReview(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      const reviewData = {
+        carId: formData.get('carId'),
+        rating: Number(formData.get('rating')),
+        comment: formData.get('comment')
+      };
+
+      try {
+        await apiCall('/reviews', {
+          method: 'POST',
+          body: JSON.stringify(reviewData)
+        });
+
+        showToast('Review added successfully!', 'success');
+        form.reset();
+        await loadData();
+
+      } catch (error) {
+        showToast(error.message || 'Failed to add review', 'error');
+      }
+    }
+
+    function renderManageCars() {
+      const table = document.getElementById('carsTable');
+      if (cars.length === 0) {
+        table.innerHTML = '<p class="text-muted">No cars yet</p>';
+        return;
+      }
+
+      table.innerHTML = cars.map(car => `
+        <div class="card mb-2">
+          <div class="d-flex justify-between align-center">
+            <div>
+              <strong>${escapeHtml(car.brand)} ${escapeHtml(car.model)}</strong>
+              <div class="text-muted" style="font-size: 0.9rem;">
+                ${car.year} • ${formatPrice(car.price)}
+              </div>
+            </div>
+            <button onclick="deleteCar('${car._id}')" class="btn btn-sm btn-danger">
+              Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderManageReviews() {
+      const table = document.getElementById('reviewsTable');
+      if (reviews.length === 0) {
+        table.innerHTML = '<p class="text-muted">No reviews yet</p>';
+        return;
+      }
+
+      table.innerHTML = reviews.map(review => {
+        const car = cars.find(c => String(c._id) === String(review.carId || review.carId?._id));
+        return `
+          <div class="card mb-2">
+            <div class="d-flex justify-between align-center">
+              <div style="flex: 1;">
+                <div class="d-flex align-center gap-1 mb-1">
+                  <span>${renderStars(review.rating)}</span>
+                  <span class="badge">${review.rating}/5</span>
+                </div>
+                ${car ? `<div class="text-muted" style="font-size: 0.85rem;">${escapeHtml(car.brand)} ${escapeHtml(car.model)}</div>` : ''}
+                <p class="text-muted" style="font-size: 0.9rem; margin: 4px 0 0;">${escapeHtml(review.comment)}</p>
+              </div>
+              <button onclick="deleteReview('${review._id}')" class="btn btn-sm btn-danger">
+                Delete
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function deleteCar(id) {
+      if (!confirm('Delete this car? This cannot be undone.')) return;
+
+      try {
+        await apiCall(`/cars/${id}`, { method: 'DELETE' });
+        showToast('Car deleted', 'success');
+        await loadData();
+      } catch (error) {
+        showToast(error.message || 'Failed to delete car', 'error');
+      }
+    }
+
+    async function deleteReview(id) {
+      if (!confirm('Delete this review? This cannot be undone.')) return;
+
+      try {
+        await apiCall(`/reviews/${id}`, { method: 'DELETE' });
+        showToast('Review deleted', 'success');
+        await loadData();
+      } catch (error) {
+        showToast(error.message || 'Failed to delete review', 'error');
+      }
+    }
+
+    // Load data on page ready
+    document.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>

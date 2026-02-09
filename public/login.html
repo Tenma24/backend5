@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Ramazan Motors</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">RM</div>
+        <span>Ramazan Motors</span>
+      </a>
+      
+      <ul class="navbar-nav">
+        <li><a href="/index.html" class="nav-link">Home</a></li>
+        <li><a href="/cars.html" class="nav-link">Browse Cars</a></li>
+        <li><a href="/register.html" class="btn btn-sm btn-primary">Sign Up</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Login Form -->
+  <section class="container" style="max-width: 480px; padding-top: 80px;">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2 class="card-title">Welcome Back</h2>
+        <p class="card-subtitle">Login to your account</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            class="form-control" 
+            placeholder="your@email.com"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-control" 
+            placeholder="Enter your password"
+            required
+            minlength="6"
+          >
+          <small class="form-text">Minimum 6 characters</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+          Login
+        </button>
+      </form>
+
+      <div class="card-footer text-center">
+        <p class="text-muted">
+          Don't have an account? 
+          <a href="/register.html" class="text-primary" style="text-decoration: none; font-weight: 600;">
+            Sign up here
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Demo Credentials -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h3 class="card-title">Demo Credentials</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-2">For testing purposes, you can use:</p>
+        <div class="mb-2">
+          <strong>Admin Account:</strong><br>
+          <code>admin@test.com</code> / <code>admin123</code>
+        </div>
+        <div>
+          <strong>Regular User:</strong><br>
+          <code>user@test.com</code> / <code>user123</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/main.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (isLoggedIn()) {
+      const role = getAuth().role;
+      window.location.href = role === 'admin' ? '/admin.html' : '/cars.html';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const loginBtn = document.getElementById('loginBtn');
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in...';
+
+      try {
+        const data = await apiCall('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+
+        // Save auth data
+        setAuth({
+          token: data.token,
+          role: data.role,
+          email: email
+        });
+
+        showToast('Login successful!', 'success');
+
+        // Redirect based on role
+        setTimeout(() => {
+          window.location.href = data.role === 'admin' ? '/admin.html' : '/cars.html';
+        }, 1000);
+
+      } catch (error) {
+        showToast(error.message || 'Login failed', 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      }
+    }
+  </script>
+</body>
+</html>

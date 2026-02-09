@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Ramazan Motors</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">RM</div>
+        <span>Ramazan Motors</span>
+      </a>
+      
+      <ul class="navbar-nav">
+        <li><a href="/index.html" class="nav-link">Home</a></li>
+        <li><a href="/cars.html" class="nav-link">Browse Cars</a></li>
+        <li><a href="/login.html" class="btn btn-sm">Login</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Register Form -->
+  <section class="container" style="max-width: 480px; padding-top: 80px;">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2 class="card-title">Create Account</h2>
+        <p class="card-subtitle">Join Ramazan Motors today</p>
+      </div>
+
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            class="form-control" 
+            placeholder="your@email.com"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-control" 
+            placeholder="Create a password"
+            required
+            minlength="6"
+          >
+          <small class="form-text">Minimum 6 characters</small>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            class="form-control" 
+            placeholder="Re-enter your password"
+            required
+            minlength="6"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="registerBtn">
+          Create Account
+        </button>
+      </form>
+
+      <div class="card-footer text-center">
+        <p class="text-muted">
+          Already have an account? 
+          <a href="/login.html" class="text-primary" style="text-decoration: none; font-weight: 600;">
+            Login here
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/main.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (isLoggedIn()) {
+      window.location.href = '/cars.html';
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const registerBtn = document.getElementById('registerBtn');
+
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Creating account...';
+
+      try {
+        // Register user
+        await apiCall('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+
+        showToast('Account created successfully!', 'success');
+
+        // Auto-login after registration
+        try {
+          const loginData = await apiCall('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+          });
+
+          setAuth({
+            token: loginData.token,
+            role: loginData.role,
+            email: email
+          });
+
+          showToast('Logged in successfully!', 'success');
+
+          setTimeout(() => {
+            window.location.href = '/cars.html';
+          }, 1500);
+
+        } catch (loginError) {
+          // If auto-login fails, redirect to login page
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 1500);
+        }
+
+      } catch (error) {
+        showToast(error.message || 'Registration failed', 'error');
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Create Account';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,424 +1,138 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Auto Dealership — Cars</title>
-  <style>
-    :root{
-      --bg:#0b1220;
-      --panel: rgba(255,255,255,0.06);
-      --panel2: rgba(255,255,255,0.09);
-      --stroke: rgba(255,255,255,0.12);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.68);
-      --good: #22c55e;
-      --bad: #ef4444;
-      --warn: #f59e0b;
-      --shadow: 0 18px 50px rgba(0,0,0,0.35);
-      --radius: 18px;
-    }
-
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color: var(--text);
-      background:
-        radial-gradient(1200px 800px at 20% -10%, rgba(59,130,246,0.35), transparent 60%),
-        radial-gradient(1000px 700px at 110% 20%, rgba(168,85,247,0.28), transparent 55%),
-        radial-gradient(800px 600px at 30% 120%, rgba(34,197,94,0.18), transparent 55%),
-        var(--bg);
-      min-height: 100vh;
-    }
-
-    .wrap{ max-width: 1150px; margin: 0 auto; padding: 22px 16px 60px; }
-
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:14px;
-      padding: 14px 16px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.05));
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      flex-wrap: wrap;
-    }
-    .brand{ display:flex; gap:12px; align-items:center; }
-    .logo{
-      width:42px;height:42px;border-radius:14px;
-      background: linear-gradient(135deg, rgba(59,130,246,1), rgba(168,85,247,1));
-      box-shadow: 0 14px 35px rgba(59,130,246,0.25);
-      display:grid;place-items:center; font-weight:800;
-    }
-    .brand h1{ margin:0; font-size: 18px; line-height: 1.2; }
-    .brand p{ margin:2px 0 0; color: var(--muted); font-size: 13px; }
-
-    .stats{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
-    .pill{
-      padding: 10px 12px; border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--stroke);
-      color: var(--muted);
-      font-size: 13px;
-      white-space:nowrap;
-    }
-    .pill b{ color: var(--text); }
-
-    .grid{ display:grid; grid-template-columns: 380px 1fr; gap: 16px; margin-top: 16px; }
-    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
-
-    .panel{
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      overflow:hidden;
-    }
-    .panelHead{ padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .panelHead h2{ margin:0; font-size: 15px; letter-spacing: 0.2px; }
-    .panelHead p{ margin: 6px 0 0; color: var(--muted); font-size: 13px; }
-    .panelBody{ padding: 14px; }
-
-    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .row1{ display:grid; grid-template-columns: 1fr; gap: 10px; }
-
-    label{ font-size: 12px; color: var(--muted); display:block; margin-bottom: 6px; }
-    input, select, textarea{
-      width:100%;
-      padding: 11px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(0,0,0,0.25);
-      color: var(--text);
-      outline: none;
-    }
-    textarea{ min-height: 90px; resize: vertical; }
-
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
-    .btn{
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.08);
-      color: var(--text);
-      padding: 11px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      transition: transform .06s ease, background .2s ease;
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .btn:hover{ background: rgba(255,255,255,0.12); }
-    .btn:active{ transform: translateY(1px); }
-    .btnPrimary{
-      background: linear-gradient(135deg, rgba(34,197,94,0.9), rgba(16,185,129,0.9));
-      border-color: rgba(34,197,94,0.35);
-      box-shadow: 0 12px 30px rgba(34,197,94,0.18);
-    }
-    .btnDanger{ background: rgba(239,68,68,0.16); border-color: rgba(239,68,68,0.25); }
-    .btnGhost{ background: transparent; }
-
-    .filters{
-      display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
-      padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .filtersLeft{ display:flex; gap:10px; flex-wrap:wrap; flex:1; }
-    .filtersRight{ display:flex; gap:10px; flex-wrap:wrap; }
-    .mini{
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(0,0,0,0.22);
-      color: var(--text);
-      min-width: 180px;
-    }
-    .selectMini{ min-width: 160px; }
-
-    .list{ padding: 14px; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    @media (max-width: 980px){ .list{ grid-template-columns: 1fr; } }
-    .card{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      padding: 14px;
-      display:flex; flex-direction:column; gap: 10px;
-    }
-    .cardTop{ display:flex; justify-content:space-between; gap: 10px; align-items:flex-start; }
-    .title{ margin:0; font-size: 15px; letter-spacing: 0.2px; }
-    .subtitle{ margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-    .price{
-      font-weight: 800; font-size: 15px; white-space:nowrap;
-      background: rgba(34,197,94,0.14);
-      border: 1px solid rgba(34,197,94,0.20);
-      padding: 8px 10px;
-      border-radius: 999px;
-    }
-    .chips{ display:flex; flex-wrap:wrap; gap: 8px; }
-    .chip{
-      font-size: 12px; color: var(--muted);
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.16);
-    }
-    .cardBtns{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 2px; }
-
-    .toast{
-      position: fixed; right: 16px; bottom: 16px; max-width: 420px;
-      padding: 12px 14px; border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(0,0,0,0.55);
-      color: var(--text);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      display:none;
-    }
-    .toast.show{ display:block; }
-    .toast.good{ border-color: rgba(34,197,94,0.35); }
-    .toast.bad{ border-color: rgba(239,68,68,0.35); }
-
-    .modalOverlay{
-      position: fixed; inset:0;
-      background: rgba(0,0,0,0.55);
-      display:none;
-      align-items:center; justify-content:center;
-      padding: 16px;
-    }
-    .modalOverlay.show{ display:flex; }
-    .modal{
-      width: min(720px, 100%);
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(12,18,32,0.92);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .modalHead{
-      padding: 14px 14px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-    }
-    .modalHead b{ font-size: 14px; }
-    .modalBody{ padding: 14px; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ramazan Motors - Premium Auto Dealership</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">AD</div>
-        <div>
-          <h1>Ramazan Motors</h1>
-          <p>Cars catalog (Assignment 4)</p>
-        </div>
-      </div>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <div class="navbar-logo">RM</div>
+        <span>Ramazan Motors</span>
+      </a>
+      
+      <button class="navbar-toggle" onclick="toggleMobileMenu()">☰</button>
+      
+      <ul class="navbar-nav">
+        <li><a href="/index.html" class="nav-link active">Home</a></li>
+        <li><a href="/cars.html" class="nav-link">Browse Cars</a></li>
+        <li class="nav-auth"></li>
+      </ul>
+    </div>
+  </nav>
 
-      <div class="stats">
-        <div class="pill">Total cars: <b id="statTotal">0</b></div>
-        <div class="pill">Last sync: <b id="statSync">—</b></div>
-        <div class="pill">Auth: <b id="authStatus">Guest</b></div>
-        <button class="btn" id="logoutBtn" style="display:none">Logout</button>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">Find Your Dream Car</h1>
+      <p class="hero-subtitle">
+        Premium selection of quality vehicles with transparent pricing and comprehensive reviews
+      </p>
+      <div class="d-flex justify-center gap-2">
+        <a href="/cars.html" class="btn btn-primary btn-lg">Browse Inventory</a>
+        <a href="/register.html" class="btn btn-lg">Get Started</a>
       </div>
     </div>
+  </section>
 
-    <div class="grid">
-      <!-- LEFT -->
-      <section class="panel">
-        <div class="panelHead">
-          <h2>Admin panel</h2>
-          <p>Login → then you can add / edit / delete cars (admin only)</p>
-        </div>
-
-        <div class="panelBody">
-          <div class="row1">
-            <div>
-              <label>Email</label>
-              <input id="loginEmail" placeholder="admin@mail.com" />
-            </div>
-            <div>
-              <label>Password</label>
-              <input id="loginPassword" placeholder="123456" type="password" />
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn" id="loginBtn">Login</button>
-          </div>
-
-          <div style="height:14px"></div>
-
-          <div class="row">
-            <div>
-              <label>Brand *</label>
-              <input id="brand" placeholder="Toyota" />
-            </div>
-            <div>
-              <label>Model *</label>
-              <input id="model" placeholder="Camry" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div>
-              <label>Year *</label>
-              <input id="year" placeholder="2020" inputmode="numeric" />
-            </div>
-            <div>
-              <label>Price (KZT) *</label>
-              <input id="price" placeholder="13500000" inputmode="numeric" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div>
-              <label>Mileage (km)</label>
-              <input id="mileage" placeholder="65000" inputmode="numeric" />
-            </div>
-            <div>
-              <label>Color</label>
-              <input id="color" placeholder="White" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div>
-              <label>Transmission</label>
-              <select id="transmission">
-                <option value="">—</option>
-                <option value="AT">AT</option>
-                <option value="MT">MT</option>
-              </select>
-            </div>
-            <div>
-              <label>Fuel</label>
-              <select id="fuel">
-                <option value="">—</option>
-                <option value="Gasoline">Gasoline</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Hybrid">Hybrid</option>
-                <option value="Electric">Electric</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="row1">
-            <div>
-              <label>Description</label>
-              <textarea id="description" placeholder="Condition, owner, options..."></textarea>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn btnPrimary" id="addBtn">Add car</button>
-            <button class="btn btnGhost" id="clearBtn">Clear</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- RIGHT -->
-      <section class="panel">
-        <div class="filters">
-          <div class="filtersLeft">
-            <input class="mini" id="search" placeholder="Search: Toyota, Camry, 2020..." />
-            <select class="mini selectMini" id="sort">
-              <option value="new">Sort: Newest</option>
-              <option value="priceAsc">Sort: Price (low → high)</option>
-              <option value="priceDesc">Sort: Price (high → low)</option>
-              <option value="yearDesc">Sort: Year (new → old)</option>
-              <option value="yearAsc">Sort: Year (old → new)</option>
-            </select>
-          </div>
-          <div class="filtersRight">
-            <button class="btn" id="loadBtn">Refresh</button>
-          </div>
-        </div>
-
-        <div class="list" id="list"></div>
-      </section>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <!-- Edit Modal -->
-  <div class="modalOverlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modalHead">
-        <b>Edit car</b>
-        <button class="btn btnGhost" id="modalClose">Close</button>
-      </div>
-      <div class="modalBody">
-        <div class="row">
-          <div>
-            <label>Brand *</label>
-            <input id="e_brand" />
-          </div>
-          <div>
-            <label>Model *</label>
-            <input id="e_model" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Year *</label>
-            <input id="e_year" inputmode="numeric" />
-          </div>
-          <div>
-            <label>Price (KZT) *</label>
-            <input id="e_price" inputmode="numeric" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Mileage (km)</label>
-            <input id="e_mileage" inputmode="numeric" />
-          </div>
-          <div>
-            <label>Color</label>
-            <input id="e_color" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Transmission</label>
-            <select id="e_transmission">
-              <option value="">—</option>
-              <option value="AT">AT</option>
-              <option value="MT">MT</option>
-            </select>
-          </div>
-          <div>
-            <label>Fuel</label>
-            <select id="e_fuel">
-              <option value="">—</option>
-              <option value="Gasoline">Gasoline</option>
-              <option value="Diesel">Diesel</option>
-              <option value="Hybrid">Hybrid</option>
-              <option value="Electric">Electric</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row1">
-          <div>
-            <label>Description</label>
-            <textarea id="e_description"></textarea>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="btn btnPrimary" id="saveBtn">Save changes</button>
-          <button class="btn btnDanger" id="deleteBtn">Delete car</button>
-          <span class="pill" id="editIdPill" style="margin-left:auto">id: <b id="editId">—</b></span>
-        </div>
+  <!-- Stats Section -->
+  <section class="container">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="spinner" style="margin: 0 auto"></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script src="app.js"></script>
+  <!-- Featured Cars -->
+  <section class="container">
+    <h2 class="text-center mb-3">Featured Cars</h2>
+    <div class="grid grid-3" id="featuredCars">
+      <div class="card">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="container" style="padding: 80px 20px;">
+    <div class="card text-center">
+      <h2 class="mb-2">Ready to Find Your Perfect Car?</h2>
+      <p class="text-muted mb-3">Join thousands of satisfied customers who found their dream vehicles with us</p>
+      <div class="d-flex justify-center gap-2">
+        <a href="/register.html" class="btn btn-primary btn-lg">Sign Up Now</a>
+        <a href="/cars.html" class="btn btn-lg">View All Cars</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/main.js"></script>
+  <script>
+    // Load stats and featured cars
+    async function loadHomeData() {
+      try {
+        const stats = await apiCall('/stats');
+        
+        // Render stats
+        const statsGrid = document.getElementById('statsGrid');
+        statsGrid.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-value">${stats.totalCars}</div>
+            <div class="stat-label">Available Cars</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.totalReviews}</div>
+            <div class="stat-label">Customer Reviews</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.avgRating.toFixed(1)}</div>
+            <div class="stat-label">Average Rating</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.totalUsers}</div>
+            <div class="stat-label">Happy Customers</div>
+          </div>
+        `;
+
+        // Render featured cars (top rated)
+        const featuredCars = document.getElementById('featuredCars');
+        if (stats.topRatedCars && stats.topRatedCars.length > 0) {
+          featuredCars.innerHTML = stats.topRatedCars.slice(0, 3).map(car => `
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">${escapeHtml(car.brand)} ${escapeHtml(car.model)}</h3>
+                <div class="card-subtitle">${car.year} • ${renderStars(car.avgRating)} ${car.avgRating.toFixed(1)}/5</div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex justify-between align-center mb-2">
+                  <span class="badge badge-success">${formatPrice(car.price)}</span>
+                  <span class="badge">${car.reviewCount} reviews</span>
+                </div>
+                <p class="text-muted">${escapeHtml(car.description || 'No description available')}</p>
+              </div>
+              <div class="card-footer">
+                <a href="/cars.html?id=${car._id}" class="btn btn-primary btn-block">View Details</a>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          featuredCars.innerHTML = '<p class="text-muted text-center">No featured cars yet</p>';
+        }
+
+      } catch (error) {
+        console.error('Error loading home data:', error);
+        document.getElementById('statsGrid').innerHTML = '<p class="text-danger text-center">Failed to load statistics</p>';
+      }
+    }
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadHomeData);
+  </script>
 </body>
 </html>
