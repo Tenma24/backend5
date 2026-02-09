@@ -139,7 +139,7 @@ node server.js
 
 6. Deploy and open the public URL.
 
-![Landing Page](screens/s1.png)
+![Landing Page](screens/s11.png)
 
 ---
 
@@ -158,13 +158,13 @@ A Postman collection is included to test all production endpoints:
 
 ## Screenshots (Placeholders)
 
-![Landing Page](screens/s2.png)
+![Landing Page](screens/s22.png)
 
-![Landing Page](screens/s3.png)
+![Landing Page](screens/s33.png)
 
-![Landing Page](screens/s4.png)
+![Landing Page](screens/s44.png)
 
-![Landing Page](screens/s5.png)
+![Landing Page](screens/s55.png)
 
 ---
 
